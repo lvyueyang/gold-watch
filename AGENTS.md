@@ -32,3 +32,8 @@ https://developers.cloudflare.com/workers/runtime-apis/nodejs/
 
 Retrieve API references and limits from:
 `/kv/` · `/r2/` · `/d1/` · `/durable-objects/` · `/queues/` · `/vectorize/` · `/workers-ai/` · `/agents/`
+
+## Project Rules
+
+1.  **Language**: All UI text, comments, and documentation must be in Simplified Chinese (简体中文).
+2.  **Server-Side Rendering (SSR)**: Admin pages (e.g., `/admin/webhooks`, `/admin/instruments`, `/admin/rules`) MUST prioritize SSR over Client-Side Rendering (CSR). Data fetching logic should be encapsulated in `src/lib/data/` and called directly in async Server Components.
