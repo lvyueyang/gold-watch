@@ -4,7 +4,7 @@ import { getWebhooks } from '@/lib/data/webhooks';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { notFound } from 'next/navigation';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 async function getRule(id: string) {
   try {

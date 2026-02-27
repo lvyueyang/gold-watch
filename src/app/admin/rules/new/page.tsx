@@ -2,7 +2,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { RuleForm } from '@/components/rules/rule-form';
 import { getWebhooks } from '@/lib/data/webhooks';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export default async function NewRulePage() {
   const webhooks = await getWebhooks();

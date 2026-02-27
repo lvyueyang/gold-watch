@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getInstruments } from '@/lib/data/instruments';
 import { InstrumentActions } from '@/components/instruments/instrument-actions';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export default async function InstrumentsPage() {
   const instruments = await getInstruments();

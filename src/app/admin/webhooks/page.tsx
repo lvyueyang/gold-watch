@@ -6,7 +6,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { getWebhooks } from '@/lib/data/webhooks';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export default async function WebhooksPage() {
   const webhooks = await getWebhooks();

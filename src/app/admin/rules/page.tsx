@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getRules } from '@/lib/data/rules';
 import { RuleActions } from '@/components/rules/rule-actions';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export default async function RulesPage() {
   const rules = await getRules();
