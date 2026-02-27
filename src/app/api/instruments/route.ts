@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toggleInstrumentStatus } from '@/lib/kv';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {

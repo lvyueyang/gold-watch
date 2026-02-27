@@ -6,7 +6,7 @@ import { Rule } from '@/lib/types';
 import { matchRules } from '@/lib/engine/matcher';
 import { sendWebhook } from '@/lib/notification/sender';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 export const maxDuration = 60; // 允许最长执行 60 秒
 
 async function collectOnce() {
