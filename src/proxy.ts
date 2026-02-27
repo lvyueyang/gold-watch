@@ -20,7 +20,7 @@ function isProtectedRoute(path: string) {
   return path.startsWith('/admin') || path.startsWith('/api');
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
   // 1. Check for session cookie
