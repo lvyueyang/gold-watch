@@ -14,13 +14,13 @@
 		{
 			"binding": "DB",
 			"database_name": "gold-watch-db",
-			"database_id": "FILL_YOUR_DATABASE_ID_HERE"
+			"database_id": "a941e77b-f242-4de2-b031-5dcaf6d5347c"
 		}
 	],
 	"kv_namespaces": [
 		{
 			"binding": "KV_QUOTES",
-			"id": "FILL_YOUR_KV_ID_HERE"
+			"id": "3d78c6b881c64ff3ae846a35f3f0b7f0"
 		}
 	],
 	"triggers": {
