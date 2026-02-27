@@ -36,56 +36,79 @@ export async function getQuote(instrumentId: string): Promise<PriceTick | null> 
 }
 
 export async function getAllQuotes(): Promise<PriceTick[]> {
-  const kv = await getKV();
-  if (!kv) return [];
+  try {
+    const kv = await getKV();
+    if (!kv) return [];
 
-  const list = await kv.list({ prefix: 'quote:' });
-  const ticks: PriceTick[] = [];
+    const list = await kv.list({ prefix: 'quote:' });
+    const ticks: PriceTick[] = [];
 
-  for (const key of list.keys) {
-    const data = await kv.get(key.name, 'json');
-    if (data) {
-      ticks.push(data as PriceTick);
+    for (const key of list.keys) {
+      const data = await kv.get(key.name, 'json');
+      if (data) {
+        ticks.push(data as PriceTick);
+      }
     }
-  }
 
-  return ticks;
+    return ticks;
+  } catch (e) {
+    console.warn('Failed to fetch quotes:', e);
+    return [];
+  }
 }
 
 // 配置助手函数
 const CONFIG_KEY_INTERVAL = 'config:interval';
 
 export async function getFetchInterval(): Promise<number> {
-  const kv = await getKV();
-  if (!kv) return 20; // 如果没有 KV，默认为 20 秒
+  try {
+    const kv = await getKV();
+    if (!kv) return 20; // 如果没有 KV，默认为 20 秒
 
-  const val = await kv.get(CONFIG_KEY_INTERVAL);
-  return val ? parseInt(val) : 20;
+    const val = await kv.get(CONFIG_KEY_INTERVAL);
+    return val ? parseInt(val) : 20;
+  } catch (e) {
+    console.warn('Failed to fetch interval:', e);
+    return 20;
+  }
 }
 
 export async function setFetchInterval(seconds: number) {
-  const kv = await getKV();
-  if (!kv) return;
+  try {
+    const kv = await getKV();
+    if (!kv) return;
 
-  await kv.put(CONFIG_KEY_INTERVAL, seconds.toString());
+    await kv.put(CONFIG_KEY_INTERVAL, seconds.toString());
+  } catch (e) {
+    console.warn('Failed to set interval:', e);
+  }
 }
 
 // 标的暂停配置
 const CONFIG_KEY_PAUSED_INSTRUMENTS = 'config:paused_instruments';
 
 export async function getPausedInstruments(): Promise<string[]> {
-  const kv = await getKV();
-  if (!kv) return [];
+  try {
+    const kv = await getKV();
+    if (!kv) return [];
 
-  const val = await kv.get(CONFIG_KEY_PAUSED_INSTRUMENTS, 'json');
-  return (val as string[]) || [];
+    const val = await kv.get(CONFIG_KEY_PAUSED_INSTRUMENTS, 'json');
+    return (val as string[]) || [];
+  } catch (e) {
+    console.warn('Failed to fetch paused instruments:', e);
+    return [];
+  }
 }
 
 export async function setPausedInstruments(ids: string[]) {
-  const kv = await getKV();
-  if (!kv) return;
+  try {
+    const kv = await getKV();
+    if (!kv) return;
 
-  await kv.put(CONFIG_KEY_PAUSED_INSTRUMENTS, JSON.stringify(ids));
+    await kv.put(CONFIG_KEY_PAUSED_INSTRUMENTS, JSON.stringify(ids));
+  } catch (e) {
+    console.warn('Failed to set paused instruments:', e);
+  }
 }
 
 export async function toggleInstrumentStatus(id: string, active: boolean) {

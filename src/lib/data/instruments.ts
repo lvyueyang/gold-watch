@@ -32,29 +32,41 @@ async function getRuleCounts(): Promise<Record<string, number>> {
 }
 
 export async function getInstruments(): Promise<InstrumentWithRules[]> {
-  // 从 KV 获取最新价格以确保实时性
-  const quotesPromise = getAllQuotes();
-  // 从 D1 获取规则数量
-  const ruleCountsPromise = getRuleCounts();
-  // 获取暂停的标的列表
-  const pausedPromise = getPausedInstruments();
+  try {
+    // 从 KV 获取最新价格以确保实时性
+    const quotesPromise = getAllQuotes();
+    // 从 D1 获取规则数量
+    const ruleCountsPromise = getRuleCounts();
+    // 获取暂停的标的列表
+    const pausedPromise = getPausedInstruments();
 
-  const [quotes, ruleCounts, pausedList] = await Promise.all([quotesPromise, ruleCountsPromise, pausedPromise]);
-  const pausedSet = new Set(pausedList);
+    const [quotes, ruleCounts, pausedList] = await Promise.all([quotesPromise, ruleCountsPromise, pausedPromise]);
+    const pausedSet = new Set(pausedList);
 
-  const quoteMap = new Map(quotes.map((q) => [q.instrumentId, q]));
+    const quoteMap = new Map(quotes.map((q) => [q.instrumentId, q]));
 
-  // 将代码定义的标的与 KV 数据合并
-  return AVAILABLE_INSTRUMENTS.map((inst) => {
-    const quote = quoteMap.get(inst.id);
-    const isPaused = pausedSet.has(inst.id);
+    // 将代码定义的标的与 KV 数据合并
+    return AVAILABLE_INSTRUMENTS.map((inst) => {
+      const quote = quoteMap.get(inst.id);
+      const isPaused = pausedSet.has(inst.id);
 
-    return {
+      return {
+        ...inst,
+        status: isPaused ? 'paused' : 'active',
+        rulesCount: ruleCounts[inst.id] || 0,
+        lastPrice: quote ? quote.price : 0,
+        updatedAt: quote ? new Date(quote.ts).toLocaleString('zh-CN') : new Date().toLocaleString('zh-CN'),
+      };
+    });
+  } catch (e) {
+    console.error('Failed to fetch instruments data:', e);
+    // Fallback: 返回基础标的列表，状态设为默认值
+    return AVAILABLE_INSTRUMENTS.map((inst) => ({
       ...inst,
-      status: isPaused ? 'paused' : 'active',
-      rulesCount: ruleCounts[inst.id] || 0,
-      lastPrice: quote ? quote.price : 0,
-      updatedAt: quote ? new Date(quote.ts).toLocaleString('zh-CN') : new Date().toLocaleString('zh-CN'),
-    };
-  });
+      status: 'active',
+      rulesCount: 0,
+      lastPrice: 0,
+      updatedAt: '暂无数据',
+    }));
+  }
 }
