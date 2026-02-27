@@ -1,4 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { getKV } from '../kv';
 
 export interface WebhookStatus {
   id: string;
@@ -42,6 +43,24 @@ export async function getWebhooks(): Promise<WebhookStatus[]> {
     }
   } catch (e) {
     // 忽略上下文错误（本地开发或构建时）
+  }
+
+  // 生产环境优先从 KV 获取配置
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const kv = await getKV();
+      if (kv) {
+        const kFeishu = await kv.get('WEBHOOK_FEISHU');
+        const kDingtalk = await kv.get('WEBHOOK_DINGTALK');
+        const kWecom = await kv.get('WEBHOOK_WECOM');
+
+        if (kFeishu) config.feishu = kFeishu;
+        if (kDingtalk) config.dingtalk = kDingtalk;
+        if (kWecom) config.wecom = kWecom;
+      }
+    } catch (e) {
+      console.error('Failed to fetch webhooks from KV:', e);
+    }
   }
 
   return [

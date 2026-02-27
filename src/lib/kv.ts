@@ -3,7 +3,7 @@ import { PriceTick } from '@/lib/types';
 
 export const KV_QUOTES = 'KV_QUOTES';
 
-async function getKV(): Promise<KVNamespace | null> {
+export async function getKV(): Promise<KVNamespace | null> {
   try {
     const { env } = await getCloudflareContext();
     return env[KV_QUOTES] as KVNamespace;

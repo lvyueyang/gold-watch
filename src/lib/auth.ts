@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { getKV } from "./kv";
 
 export const AUTH_COOKIE_NAME = "goldwatch_sid";
 
@@ -28,9 +29,24 @@ export async function verifySession(token: string) {
   }
 }
 
-export function verifyCredentials(username: string, password: string) {
-  const expectedUser = process.env.ADMIN_USER;
-  const expectedPass = process.env.ADMIN_PASS;
+export async function verifyCredentials(username: string, password: string) {
+  let expectedUser = process.env.ADMIN_USER;
+  let expectedPass = process.env.ADMIN_PASS;
+
+  // In production, try to fetch credentials from KV
+  if (process.env.NODE_ENV === "production") {
+    try {
+      const kv = await getKV();
+      if (kv) {
+        const kvUser = await kv.get("ADMIN_USER");
+        const kvPass = await kv.get("ADMIN_PASS");
+        if (kvUser) expectedUser = kvUser;
+        if (kvPass) expectedPass = kvPass;
+      }
+    } catch (e) {
+      console.error("Failed to fetch credentials from KV:", e);
+    }
+  }
 
   if (!expectedUser || !expectedPass) {
     console.error("ADMIN_USER or ADMIN_PASS not set");
