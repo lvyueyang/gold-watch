@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { Rule } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
 
-export const runtime = 'edge';
+// export const runtime = 'edge';
 
 export async function GET(req: NextRequest) {
   try {
@@ -50,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json()) as Omit<Rule, 'id' | 'createdAt' | 'updatedAt'>;
 
-    const id = uuidv4();
+    const id = crypto.randomUUID();
     const now = Date.now();
 
     await db
