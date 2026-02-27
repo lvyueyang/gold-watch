@@ -42,6 +42,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // 2.5 Allow /api/cron/collect without auth
+  if (path === '/api/cron/collect') {
+    return NextResponse.next();
+  }
+
   // 3. Check if route requires protection
   if (!isProtectedRoute(path)) {
     return NextResponse.next();
