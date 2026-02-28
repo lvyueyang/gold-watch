@@ -1,63 +1,77 @@
-# 金融监控
+# 金融监控（Next.js + Cloudflare Workers）
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/next-starter-template)
+本项目用于监控黄金等金融品的实时数据并进行规则匹配与通知，基于 Next.js，通过 OpenNext 的 Cloudflare 适配器运行在 Cloudflare Workers 上。
 
-<!-- dash-content-start -->
+## 技术栈与架构
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app). It's deployed on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
+- Next.js（App Router）
+- OpenNext Cloudflare Adapter（运行时在 Cloudflare Workers）
+- Cloudflare KV（行情与配置存储）
+- Cloudflare D1（规则存储）
+- Webhook 通知（触发外部回调）
+- 中间件统一鉴权与放行逻辑
 
-This template uses [OpenNext](https://opennext.js.org/) via the [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare), which works by taking the Next.js build output and transforming it, so that it can run in Cloudflare Workers.
+核心目录：
 
-<!-- dash-content-end -->
+- 管理后台与页面：[app](file:///Users/lyy/code/project/gold-watch/app)
+- 采集接口：[route.ts](file:///Users/lyy/code/project/gold-watch/src/app/api/cron/collect/route.ts)
+- 中间件鉴权：[middleware.ts](file:///Users/lyy/code/project/gold-watch/src/middleware.ts)
+- KV 工具方法：[kv.ts](file:///Users/lyy/code/project/gold-watch/src/lib/kv.ts)
 
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+## 功能概览
 
-```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/next-starter-template
-```
+- 实时采集京东黄金价格并写入 KV，供 UI 展示
+- 从 D1 加载规则并进行匹配，触发 Webhook 通知
+- 记录系统健康状态（采集次数、命中规则数量等）
+- 管理后台页面优先 SSR，数据在服务端直接读取
 
-A live public deployment of this template is available at [https://next-starter-template.templates.workers.dev](https://next-starter-template.templates.workers.dev)
-
-## Getting Started
-
-First, run:
+## 本地开发
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
+npm run dev
+# 打开 http://localhost:3000
 ```
 
-Then run the development server (using the package manager of your choice):
+- 页面文件可在 `app/` 下修改，保存后自动热更新
+- 采集接口位于 [route.ts](file:///Users/lyy/code/project/gold-watch/src/app/api/cron/collect/route.ts)
+
+## 环境与绑定
+
+- KV 绑定名：`KV_QUOTES`（见 wrangler.jsonc）
+- D1 绑定名：`DB`（如果使用 D1，需要在 Cloudflare 侧创建并绑定）
+- 可选环境变量：`ADMIN_USER`、`ADMIN_PASS`（用于 Basic Auth 备用方案）
+- 变更绑定后建议执行：
 
 ```bash
-npm run dev
+npx wrangler types
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## API
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 采集接口：`GET /api/cron/collect`
+  - 当前中间件已直接放行，无需登录与 Token（见 [middleware.ts](file:///Users/lyy/code/project/gold-watch/src/middleware.ts)）
+  - 若需开启 Token 校验，可在中间件中读取 KV 中的 `CRON_TOKEN` 并比对
+  - 响应字段：`success`、`executions`、`lastTick`
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## 部署到 Cloudflare
 
-## Deploying To Production
+```bash
+npm run build
+npm run deploy
+# 查看实时日志
+npx wrangler tail
+```
 
-| Command                           | Action                                       |
-| :-------------------------------- | :------------------------------------------- |
-| `npm run build`                   | Build your production site                   |
-| `npm run preview`                 | Preview your build locally, before deploying |
-| `npm run build && npm run deploy` | Deploy your production site to Cloudflare    |
-| `npm wrangler tail`               | View real-time logs for all Workers          |
+- 本项目通过 OpenNext 适配器将 Next.js 构建产物转换为可在 Workers 运行的形态
+- 生产环境变更绑定或环境后，务必同步更新并检查运行情况
 
-## Learn More
+## 注意事项
 
-To learn more about Next.js, take a look at the following resources:
+- 仓库中不要提交任何密钥或敏感信息
+- 管理后台页面（如 `/admin`）优先使用 SSR 并在服务端读取数据
+- 文案与文档统一使用简体中文
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 贡献
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+欢迎提交 Issue 或 PR 来完善功能与文档。
