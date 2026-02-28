@@ -3,9 +3,13 @@
   "name": "gold-watch-cron",
   "main": "./src/index.ts",
   "compatibility_date": "2026-02-27",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "triggers": {
-    "crons": ["* * * * *"]
+    "crons": [
+      "*/1 * * * *"
+    ]
   },
   "d1_databases": [
     {
