@@ -1,5 +1,5 @@
 // @ts-ignore `.open-next/worker.ts` is generated at build time
-import { default as handler } from './.open-next/worker.js';
+import { default as handler } from '../.open-next/worker.js';
 import { collectAndNotify } from './lib/services/collector.js';
 
 export default {
