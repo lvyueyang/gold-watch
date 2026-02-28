@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "@cloudflare/workers-types": "^4.20260228.1",
     "@tailwindcss/typography": "^0.5.16",
     "@tanstack/devtools-vite": "^0.3.11",
     "@testing-library/dom": "^10.4.0",

@@ -1,6 +1,18 @@
 import { createServerFn } from '@tanstack/react-start';
-import { verifyCredentials, signSession, AUTH_COOKIE_NAME } from '../lib/auth';
-import { setCookie } from 'vinxi/http';
+import { verifyCredentials, signSession, verifySession } from '../lib/auth';
+import { AUTH_COOKIE_NAME } from '../lib/constants';
+import { setCookie, getCookie } from 'vinxi/http';
+
+export const checkAuthFn = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const token = getCookie(AUTH_COOKIE_NAME);
+    if (!token) return { isAuthenticated: false };
+    const session = await verifySession(token);
+    return { isAuthenticated: !!session, user: session };
+  } catch (e) {
+    return { isAuthenticated: false };
+  }
+});
 
 export const loginFn = createServerFn({ method: 'POST' })
   .handler(async (ctx: any) => {

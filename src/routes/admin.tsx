@@ -1,15 +1,14 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import { verifySession, AUTH_COOKIE_NAME } from '@/lib/auth'
-import { getCookie } from 'vinxi/http'
+import { checkAuthFn } from '@/server/auth'
 
 export const Route = createFileRoute('/admin')({
   component: Layout,
   loader: async () => {
     try {
-      const token = getCookie(AUTH_COOKIE_NAME)
-      if (!token || !(await verifySession(token))) {
+      const auth = await checkAuthFn()
+      if (!auth.isAuthenticated) {
         throw redirect({ to: '/login' })
       }
     } catch (e) {

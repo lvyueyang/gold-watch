@@ -1,7 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { getKV } from "./kv";
+import { AUTH_COOKIE_NAME } from "./constants";
 
-export const AUTH_COOKIE_NAME = "goldwatch_sid";
+export { AUTH_COOKIE_NAME };
 
 // Use a distinct secret for signing if available, otherwise fallback to ADMIN_PASS or a default (not recommended for prod)
 // In a real scenario, use a dedicated random secret.
