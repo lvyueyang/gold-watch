@@ -1,9 +1,8 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { MoreHorizontal, Trash2, PauseCircle, PlayCircle, Pencil } from 'lucide-react';
+import { updateRuleStatusFn, deleteRuleFn } from '@/server/rules';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Rule } from '@/lib/types';
+import type { Rule } from '@/lib/types';
 
 interface RuleActionsProps {
   rule: Rule;
@@ -28,16 +27,10 @@ export function RuleActions({ rule }: RuleActionsProps) {
     setLoading(true);
     try {
       const newStatus = rule.status === 'active' ? 'inactive' : 'active';
-      const res = await fetch('/api/rules', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: rule.id, status: newStatus }),
-      });
-
-      if (!res.ok) throw new Error('Failed to update status');
+      await updateRuleStatusFn({ data: { id: rule.id, status: newStatus } });
 
       toast.success(newStatus === 'active' ? '规则已恢复' : '规则已暂停');
-      router.refresh();
+      router.invalidate();
     } catch (e) {
       toast.error('操作失败');
     } finally {
@@ -50,14 +43,10 @@ export function RuleActions({ rule }: RuleActionsProps) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/rules?id=${rule.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) throw new Error('Failed to delete rule');
+      await deleteRuleFn({ data: { id: rule.id } });
 
       toast.success('规则已删除');
-      router.refresh();
+      router.invalidate();
     } catch (e) {
       toast.error('删除失败');
     } finally {
@@ -79,7 +68,7 @@ export function RuleActions({ rule }: RuleActionsProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>操作</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => router.push(`/admin/rules/${rule.id}`)}>
+        <DropdownMenuItem onClick={() => router.navigate({ to: `/admin/rules/${rule.id}` })}>
           <Pencil className="mr-2 h-4 w-4" /> 编辑
         </DropdownMenuItem>
         <DropdownMenuItem onClick={toggleStatus}>

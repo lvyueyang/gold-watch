@@ -1,4 +1,4 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { getCloudflareContext } from '../context';
 import { getKV } from '../kv';
 
 export interface WebhookStatus {

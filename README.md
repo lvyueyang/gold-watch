@@ -1,77 +1,213 @@
-# 金融监控（Next.js + Cloudflare Workers）
+Welcome to your new TanStack Start app! 
 
-本项目用于监控黄金等金融品的实时数据并进行规则匹配与通知，基于 Next.js，通过 OpenNext 的 Cloudflare 适配器运行在 Cloudflare Workers 上。
+# Getting Started
 
-## 技术栈与架构
-
-- Next.js（App Router）
-- OpenNext Cloudflare Adapter（运行时在 Cloudflare Workers）
-- Cloudflare KV（行情与配置存储）
-- Cloudflare D1（规则存储）
-- Webhook 通知（触发外部回调）
-- 中间件统一鉴权与放行逻辑
-
-核心目录：
-
-- 管理后台与页面：[app](file:///Users/lyy/code/project/gold-watch/app)
-- 采集接口：[route.ts](file:///Users/lyy/code/project/gold-watch/src/app/api/cron/collect/route.ts)
-- 中间件鉴权：[middleware.ts](file:///Users/lyy/code/project/gold-watch/src/middleware.ts)
-- KV 工具方法：[kv.ts](file:///Users/lyy/code/project/gold-watch/src/lib/kv.ts)
-
-## 功能概览
-
-- 实时采集京东黄金价格并写入 KV，供 UI 展示
-- 从 D1 加载规则并进行匹配，触发 Webhook 通知
-- 记录系统健康状态（采集次数、命中规则数量等）
-- 管理后台页面优先 SSR，数据在服务端直接读取
-
-## 本地开发
+To run this application:
 
 ```bash
-npm install
-npm run dev
-# 打开 http://localhost:3000
+pnpm install
+pnpm dev
 ```
 
-- 页面文件可在 `app/` 下修改，保存后自动热更新
-- 采集接口位于 [route.ts](file:///Users/lyy/code/project/gold-watch/src/app/api/cron/collect/route.ts)
+# Building For Production
 
-## 环境与绑定
-
-- KV 绑定名：`KV_QUOTES`（见 wrangler.jsonc）
-- D1 绑定名：`DB`（如果使用 D1，需要在 Cloudflare 侧创建并绑定）
-- 可选环境变量：`ADMIN_USER`、`ADMIN_PASS`（用于 Basic Auth 备用方案）
-- 变更绑定后建议执行：
+To build this application for production:
 
 ```bash
-npx wrangler types
+pnpm build
 ```
 
-## API
+## Testing
 
-- 采集接口：`GET /api/cron/collect`
-  - 当前中间件已直接放行，无需登录与 Token（见 [middleware.ts](file:///Users/lyy/code/project/gold-watch/src/middleware.ts)）
-  - 若需开启 Token 校验，可在中间件中读取 KV 中的 `CRON_TOKEN` 并比对
-  - 响应字段：`success`、`executions`、`lastTick`
-
-## 部署到 Cloudflare
+This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
 
 ```bash
-npm run build
-npm run deploy
-# 查看实时日志
-npx wrangler tail
+pnpm test
 ```
 
-- 本项目通过 OpenNext 适配器将 Next.js 构建产物转换为可在 Workers 运行的形态
-- 生产环境变更绑定或环境后，务必同步更新并检查运行情况
+## Styling
 
-## 注意事项
+This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
-- 仓库中不要提交任何密钥或敏感信息
-- 管理后台页面（如 `/admin`）优先使用 SSR 并在服务端读取数据
-- 文案与文档统一使用简体中文
+### Removing Tailwind CSS
 
-## 贡献
+If you prefer not to use Tailwind CSS:
 
-欢迎提交 Issue 或 PR 来完善功能与文档。
+1. Remove the demo pages in `src/routes/demo/`
+2. Replace the Tailwind import in `src/styles.css` with your own styles
+3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
+4. Uninstall the packages: `pnpm add @tailwindcss/vite tailwindcss --dev`
+
+## Linting & Formatting
+
+This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
+
+
+```bash
+pnpm lint
+pnpm format
+pnpm check
+```
+
+
+## Shadcn
+
+Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+
+```bash
+pnpm dlx shadcn@latest add button
+```
+
+
+
+## Routing
+
+This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+
+### Adding A Route
+
+To add a new route to your application just add a new file in the `./src/routes` directory.
+
+TanStack will automatically generate the content of the route file for you.
+
+Now that you have two routes you can use a `Link` component to navigate between them.
+
+### Adding Links
+
+To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+
+```tsx
+import { Link } from "@tanstack/react-router";
+```
+
+Then anywhere in your JSX you can use it like so:
+
+```tsx
+<Link to="/about">About</Link>
+```
+
+This will create a link that will navigate to the `/about` route.
+
+More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
+
+### Using A Layout
+
+In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
+
+Here is an example layout that includes a header:
+
+```tsx
+import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+
+export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { charSet: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { title: 'My App' },
+    ],
+  }),
+  shellComponent: ({ children }) => (
+    <html lang="en">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <header>
+          <nav>
+            <Link to="/">Home</Link>
+            <Link to="/about">About</Link>
+          </nav>
+        </header>
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  ),
+})
+```
+
+More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
+
+## Server Functions
+
+TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
+
+```tsx
+import { createServerFn } from '@tanstack/react-start'
+
+const getServerTime = createServerFn({
+  method: 'GET',
+}).handler(async () => {
+  return new Date().toISOString()
+})
+
+// Use in a component
+function MyComponent() {
+  const [time, setTime] = useState('')
+  
+  useEffect(() => {
+    getServerTime().then(setTime)
+  }, [])
+  
+  return <div>Server time: {time}</div>
+}
+```
+
+## API Routes
+
+You can create API routes by using the `server` property in your route definitions:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+import { json } from '@tanstack/react-start'
+
+export const Route = createFileRoute('/api/hello')({
+  server: {
+    handlers: {
+      GET: () => json({ message: 'Hello, World!' }),
+    },
+  },
+})
+```
+
+## Data Fetching
+
+There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
+
+For example:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/people')({
+  loader: async () => {
+    const response = await fetch('https://swapi.dev/api/people')
+    return response.json()
+  },
+  component: PeopleComponent,
+})
+
+function PeopleComponent() {
+  const data = Route.useLoaderData()
+  return (
+    <ul>
+      {data.results.map((person) => (
+        <li key={person.name}>{person.name}</li>
+      ))}
+    </ul>
+  )
+}
+```
+
+Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
+
+# Demo files
+
+Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
+
+# Learn More
+
+You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+
+For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).

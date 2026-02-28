@@ -1,5 +1,5 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { Rule } from '@/lib/types';
+import { getCloudflareContext } from '../context';
+import type { Rule } from '../types';
 
 export async function updateRuleLastTriggered(id: string, ts: number) {
   try {

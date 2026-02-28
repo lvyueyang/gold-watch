@@ -1,4 +1,4 @@
-import { Instrument } from '@/lib/types';
+import type { Instrument } from '@/lib/types';
 
 // 定义标的的静态配置
 // 作为代码支持哪些标的的唯一事实来源

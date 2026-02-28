@@ -1,9 +1,7 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { createRuleFn, updateRuleFn } from '@/server/rules';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { AVAILABLE_INSTRUMENTS } from '@/lib/sources/registry';
-import { WebhookStatus } from '@/lib/data/webhooks';
+import type { WebhookStatus } from '@/lib/data/webhooks';
 
-import { Rule } from '@/lib/types';
+import type { Rule } from '@/lib/types';
 
 interface RuleFormProps {
   webhooks: WebhookStatus[];
@@ -25,48 +23,50 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState<string>(initialData?.type || 'touch_up');
 
-  const activeWebhooks = webhooks.filter((w) => w.status === 'active');
+  // const activeWebhooks = webhooks.filter((w) => w.status === 'active');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const data: any = {
-      name: formData.get('name'),
-      instrumentId: formData.get('instrumentId'),
-      type: formData.get('type'),
-      webhook: formData.get('webhook'),
+    
+    // 构建基础数据
+    const baseData = {
+      name: formData.get('name') as string,
+      instrumentId: formData.get('instrumentId') as string,
+      type: formData.get('type') as any, // 需要根据实际类型定义
+      webhook: formData.get('webhook') as string,
       status: initialData?.status || 'active',
+      params: {} as any
     };
 
-    if (initialData) {
-      data.id = initialData.id;
-    }
-
     if (type === 'range_out') {
-      data.params = {
+      baseData.params = {
         min: Number(formData.get('min')),
         max: Number(formData.get('max')),
       };
     } else {
-      data.params = {
+      baseData.params = {
         target: Number(formData.get('target')),
       };
     }
 
     try {
-      const res = await fetch('/api/rules', {
-        method: initialData ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) throw new Error('Failed to save rule');
-
-      toast.success(initialData ? '规则更新成功' : '规则创建成功');
-      router.push('/admin/rules');
-      router.refresh();
+      if (initialData) {
+        await updateRuleFn({ 
+          data: { ...baseData, id: initialData.id } as Rule 
+        });
+        toast.success('规则更新成功');
+      } else {
+        await createRuleFn({ 
+          data: baseData as Omit<Rule, 'id' | 'createdAt' | 'updatedAt'> 
+        });
+        toast.success('规则创建成功');
+      }
+      
+      router.navigate({ to: '/admin/rules' });
+      router.invalidate();
     } catch (error) {
       toast.error(initialData ? '更新规则失败' : '创建规则失败');
       console.error(error);
@@ -98,17 +98,15 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
               <Label htmlFor="instrumentId">监控标的</Label>
               <Select
                 name="instrumentId"
-                defaultValue={initialData?.instrumentId || AVAILABLE_INSTRUMENTS[0]?.id}
+                defaultValue={initialData?.instrumentId}
+                required
               >
                 <SelectTrigger>
                   <SelectValue placeholder="选择标的" />
                 </SelectTrigger>
                 <SelectContent>
                   {AVAILABLE_INSTRUMENTS.map((inst) => (
-                    <SelectItem
-                      key={inst.id}
-                      value={inst.id}
-                    >
+                    <SelectItem key={inst.id} value={inst.id}>
                       {inst.name} ({inst.symbol})
                     </SelectItem>
                   ))}
@@ -117,19 +115,19 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">触发类型</Label>
+              <Label htmlFor="type">触发条件</Label>
               <Select
                 name="type"
-                value={type}
+                defaultValue={type}
                 onValueChange={setType}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择类型" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="touch_up">上涨至 (Touch Up)</SelectItem>
-                  <SelectItem value="touch_down">下跌至 (Touch Down)</SelectItem>
-                  <SelectItem value="range_out">超出区间 (Range Out)</SelectItem>
+                  <SelectItem value="touch_up">向上触碰 (≥)</SelectItem>
+                  <SelectItem value="touch_down">向下触碰 (≤)</SelectItem>
+                  <SelectItem value="range_out">超出区间</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -138,38 +136,24 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
               <Label htmlFor="webhook">通知渠道</Label>
               <Select
                 name="webhook"
-                defaultValue={initialData?.webhook}
-                required
+                defaultValue={initialData?.webhook || 'feishu'}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="选择通知渠道" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {activeWebhooks.length === 0 ? (
-                    <SelectItem
-                      value="none"
-                      disabled
-                    >
-                      无可用渠道 (请先配置环境变量)
+                  {webhooks.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} {w.status === 'inactive' && '(未配置)'}
                     </SelectItem>
-                  ) : (
-                    activeWebhooks.map((wh) => (
-                      <SelectItem
-                        key={wh.id}
-                        value={wh.id}
-                      >
-                        {wh.name}
-                      </SelectItem>
-                    ))
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="space-y-4 border-t pt-4">
-            <h3 className="text-sm font-medium text-muted-foreground">参数配置</h3>
-
+          <div className="rounded-lg bg-muted p-4">
+            <h4 className="mb-4 text-sm font-medium">参数配置</h4>
             {type === 'range_out' ? (
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
@@ -179,7 +163,7 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
                     name="min"
                     type="number"
                     step="0.01"
-                    defaultValue={initialData?.params.min}
+                    defaultValue={(initialData?.params as any)?.min}
                     required
                   />
                 </div>
@@ -190,7 +174,7 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
                     name="max"
                     type="number"
                     step="0.01"
-                    defaultValue={initialData?.params.max}
+                    defaultValue={(initialData?.params as any)?.max}
                     required
                   />
                 </div>
@@ -203,27 +187,24 @@ export function RuleForm({ webhooks, initialData }: RuleFormProps) {
                   name="target"
                   type="number"
                   step="0.01"
-                  defaultValue={initialData?.params.target}
+                  defaultValue={(initialData?.params as any)?.target}
                   required
                 />
               </div>
             )}
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end gap-4">
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.back()}
+              onClick={() => router.history.back()}
+              disabled={loading}
             >
               取消
             </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {initialData ? '保存修改' : '创建规则'}
+            <Button type="submit" disabled={loading}>
+              {loading ? '保存中...' : '保存规则'}
             </Button>
           </div>
         </form>

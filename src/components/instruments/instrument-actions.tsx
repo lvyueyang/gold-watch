@@ -1,53 +1,58 @@
-'use client';
-
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
-
-import { Switch } from '@/components/ui/switch';
-import { Instrument } from '@/lib/types';
+import { Play, Pause } from 'lucide-react';
+import { toggleInstrumentStatusFn } from '@/server/instruments';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { InstrumentWithRules } from '@/lib/data/instruments';
 
 interface InstrumentActionsProps {
-  instrument: Instrument;
+  instrument: InstrumentWithRules;
 }
 
 export function InstrumentActions({ instrument }: InstrumentActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const toggleStatus = async (checked: boolean) => {
+  const toggleStatus = async () => {
     setLoading(true);
-    // checked = true means we want to active it
-    const isActive = checked;
-
     try {
-      const res = await fetch('/api/instruments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: instrument.id, active: isActive }),
-      });
+      const newStatus = instrument.status === 'active' ? false : true;
+      await toggleInstrumentStatusFn({ data: { id: instrument.id, active: newStatus } });
 
-      if (!res.ok) throw new Error('Failed to update status');
-
-      toast.success(isActive ? '监控已恢复' : '监控已暂停');
-      router.refresh();
+      toast.success(newStatus ? '监控已启用' : '监控已暂停');
+      router.invalidate();
     } catch (e) {
       toast.error('操作失败');
-      // Revert switch state if needed, but since we rely on router.refresh(),
-      // the UI will eventually reflect the server state.
-      // For optimistic update, we might need local state, but simple is fine here.
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-end">
-      <Switch
-        checked={instrument.status === 'active'}
-        onCheckedChange={toggleStatus}
-        disabled={loading}
-      />
+    <div className="flex justify-end gap-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleStatus}
+              disabled={loading}
+            >
+              {instrument.status === 'active' ? (
+                <Pause className="h-4 w-4 text-yellow-600" />
+              ) : (
+                <Play className="h-4 w-4 text-green-600" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {instrument.status === 'active' ? '暂停监控' : '启用监控'}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

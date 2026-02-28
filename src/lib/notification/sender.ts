@@ -1,4 +1,4 @@
-import { Rule, PriceTick } from '@/lib/types';
+import type { Rule, PriceTick } from '@/lib/types';
 import { WebhookAdapterFactory } from './adapters';
 import { shouldThrottle } from './throttler';
 import { getInstrumentConfig } from '@/lib/sources/registry';

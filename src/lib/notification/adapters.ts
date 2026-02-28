@@ -1,4 +1,4 @@
-import { Rule, PriceTick } from '@/lib/types';
+import type { Rule, PriceTick } from '@/lib/types';
 
 export interface AlertContext {
   rule: Rule;

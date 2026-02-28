@@ -1,7 +1,7 @@
-import { Instrument } from '@/lib/types';
-import { getAllQuotes, getPausedInstruments } from '@/lib/kv';
-import { AVAILABLE_INSTRUMENTS } from '@/lib/sources/registry';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import type { Instrument } from '../types';
+import { getAllQuotes, getPausedInstruments } from '../kv';
+import { AVAILABLE_INSTRUMENTS } from '../sources/registry';
+import { getCloudflareContext } from '../context';
 
 export interface InstrumentWithRules extends Instrument {
   rulesCount: number;
