@@ -1,0 +1,29 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "gold-watch-cron",
+  "main": "./src/index.ts",
+  "compatibility_date": "2026-02-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gold-watch-db",
+      "database_id": "a941e77b-f242-4de2-b031-5dcaf6d5347c"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV_QUOTES",
+      "id": "3d78c6b881c64ff3ae846a35f3f0b7f0"
+    }
+  ],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
+  }
+}

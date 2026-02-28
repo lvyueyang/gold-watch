@@ -1,32 +1,38 @@
 import { Rule, PriceTick } from '@/lib/types';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { WebhookAdapterFactory } from './adapters';
 import { shouldThrottle } from './throttler';
 import { getInstrumentConfig } from '@/lib/sources/registry';
 import { updateRuleLastTriggered } from '@/lib/data/rules';
+import { getKV } from '@/lib/kv';
 
-async function getWebhookUrl(id: string): Promise<string | undefined> {
+async function getWebhookUrl(id: string, env?: CloudflareEnv): Promise<string | undefined> {
+  const key =
+    id === 'feishu'
+      ? 'WEBHOOK_FEISHU'
+      : id === 'dingtalk'
+      ? 'WEBHOOK_DINGTALK'
+      : id === 'wecom'
+      ? 'WEBHOOK_WECOM'
+      : undefined;
+  if (!key) return undefined;
+
   try {
-    // 尝试从环境变量获取
-    if (process.env.WEBHOOK_FEISHU && id === 'feishu') return process.env.WEBHOOK_FEISHU;
-    if (process.env.WEBHOOK_DINGTALK && id === 'dingtalk') return process.env.WEBHOOK_DINGTALK;
-    if (process.env.WEBHOOK_WECOM && id === 'wecom') return process.env.WEBHOOK_WECOM;
-
-    // 尝试从 Cloudflare Context 获取 (Edge Runtime)
-    const { env } = await getCloudflareContext();
-    if (env) {
-      const e = env as any;
-      if (id === 'feishu') return e.WEBHOOK_FEISHU;
-      if (id === 'dingtalk') return e.WEBHOOK_DINGTALK;
-      if (id === 'wecom') return e.WEBHOOK_WECOM;
+    let kv: KVNamespace | null = null;
+    if (env && (env as any).KV_QUOTES) {
+      kv = (env as any).KV_QUOTES as KVNamespace;
+    } else {
+      kv = await getKV();
     }
+    if (!kv) return undefined;
+    const url = await kv.get(key);
+    return url || undefined;
   } catch (e) {
-    console.error('Failed to get webhook config:', e);
+    console.error('Failed to get webhook URL from KV:', e);
+    return undefined;
   }
-  return undefined;
 }
 
-export async function sendWebhook(rule: Rule, tick: PriceTick) {
+export async function sendWebhook(rule: Rule, tick: PriceTick, env?: CloudflareEnv) {
   if (!rule.webhook) return;
 
   // 检查防抖 (默认 5 分钟冷却)
@@ -35,7 +41,7 @@ export async function sendWebhook(rule: Rule, tick: PriceTick) {
     return;
   }
 
-  const url = await getWebhookUrl(rule.webhook);
+  const url = await getWebhookUrl(rule.webhook, env);
   if (!url) {
     console.error(`Webhook URL not found for channel: ${rule.webhook}`);
     return;
