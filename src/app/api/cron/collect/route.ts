@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchJdGold } from '@/lib/sources/jd';
-import { saveQuote, getFetchInterval, updateSystemHealth } from '@/lib/kv';
+import { saveQuote, updateSystemHealth } from '@/lib/kv';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { Rule } from '@/lib/types';
 import { matchRules } from '@/lib/engine/matcher';
@@ -54,41 +54,14 @@ async function collectOnce() {
 }
 
 export async function GET(req: NextRequest) {
-  // 获取配置的间隔
-  const interval = await getFetchInterval();
-  const safeInterval = Math.max(5, interval); // 最小 5 秒，防止过频
-
-  // 计算在一分钟内可以执行多少次
-  // 留出最后 2 秒缓冲
-  const maxExecutionTime = 58 * 1000;
-  const startTime = Date.now();
   let count = 0;
   let lastResult = null;
 
-  while (Date.now() - startTime < maxExecutionTime) {
-    const loopStart = Date.now();
-
-    // 执行一次采集
-    try {
-      lastResult = await collectOnce();
-      count++;
-    } catch (e) {
-      console.error('Collect error:', e);
-    }
-
-    // 计算下次执行时间
-    const elapsed = Date.now() - loopStart;
-    const remaining = safeInterval * 1000 - elapsed;
-
-    // 如果剩余时间太短，就不等待了，直接下一轮（或者结束）
-    // 如果还有时间，就等待
-    if (remaining > 0) {
-      // 检查等待后是否会超时
-      if (Date.now() + remaining - startTime > maxExecutionTime) {
-        break;
-      }
-      await new Promise((resolve) => setTimeout(resolve, remaining));
-    }
+  try {
+    lastResult = await collectOnce();
+    if (lastResult) count = 1;
+  } catch (e) {
+    console.error('Collect error:', e);
   }
 
   // 记录心跳
@@ -104,7 +77,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
     executions: count,
-    interval: safeInterval,
     lastTick: lastResult?.tick,
   });
 }
