@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "gold-watch",
-	"main": ".open-next/worker.js",
+	"main": "src/custom-worker.ts",
 	"compatibility_date": "2024-09-23",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -23,7 +23,6 @@
 			"id": "3d78c6b881c64ff3ae846a35f3f0b7f0"
 		}
 	],
-	
 	"observability": {
 		"logs": {
 			"enabled": true,
